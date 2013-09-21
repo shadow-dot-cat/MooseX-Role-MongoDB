@@ -1,3 +1,9 @@
+requires "MongoDB::MongoClient" => "0.702";
+requires "Moose::Role" => "2";
+requires "MooseX::AttributeShortcuts" => "0";
+requires "Type::Params" => "0";
+requires "Types::Standard" => "0";
+requires "namespace::autoclean" => "0";
 requires "perl" => "v5.10.0";
 requires "strict" => "0";
 requires "warnings" => "0";
@@ -9,7 +15,11 @@ on 'test' => sub {
   requires "IO::Handle" => "0";
   requires "IPC::Open3" => "0";
   requires "List::Util" => "0";
-  requires "Test::More" => "0";
+  requires "Moose" => "0";
+  requires "Parallel::Iterator" => "0";
+  requires "Test::FailWarnings" => "0";
+  requires "Test::More" => "0.96";
+  requires "Test::Requires" => "0";
 };
 
 on 'configure' => sub {
