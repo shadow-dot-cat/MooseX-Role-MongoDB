@@ -23,11 +23,6 @@ use namespace::autoclean;
 A hash reference of L<MongoDB::MongoClient> options that will be passed to its
 C<connect> method.
 
-=method _build_client_options
-
-Returns an empty hash reference.  Override this to provide your own
-defaults.
-
 =cut
 
 has client_options => (
@@ -141,6 +136,22 @@ sub mongo_collection {
 }
 
 #--------------------------------------------------------------------------#
+# Builder documentation
+#--------------------------------------------------------------------------#
+
+=method _build_client_options
+
+Returns an empty hash reference.  Override this to provide your own defaults.
+
+=cut
+
+=method _build_default_database
+
+Returns the string 'test'.  Override this to provide your own default.
+
+=cut
+
+#--------------------------------------------------------------------------#
 # Private methods
 #--------------------------------------------------------------------------#
 
@@ -181,19 +192,19 @@ In your code:
 
     $obj_>mongo_database("test");                 # test database
     $obj->mongo_collection("books");              # in default database
-    $obj->mongo_collection("otherdb" => "books"); # other database
+    $obj->mongo_collection("otherdb" => "books"); # in other database
 
 =head1 DESCRIPTION
 
-This role lets a class work with MongoDB.  It's major value is providing
-fork-safety.  It caches all MongoDB objects and regenerates them on-demand
-after a fork.
+This role helps create and manage MongoDB connections and objects.  MongoDB
+objects are generated lazily on demand and cached.
 
-=usage
+The role also compensates for forks.  If a fork is detected, the caches are
+cleared and new connections and objects will be generated in the new process.
 
-=head1 USAGE
-
-Good luck!
+When using this role, you should not hold onto MongoDB objects for long if
+there is a chance of your code forking.  Instead, request them again
+each time you need them.
 
 =head1 SEE ALSO
 
