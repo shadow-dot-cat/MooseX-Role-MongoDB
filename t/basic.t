@@ -31,7 +31,17 @@ $conn->get_database("test")->get_collection($coll_name)->drop;
 # Tests
 #--------------------------------------------------------------------------#
 
-my $mgr = new_ok('MongoManager');
+my $mgr;
+
+$mgr = new_ok( 'MongoManager' => [ default_database => "test2" ] );
+
+$mgr = new_ok('MongoManager');
+
+isa_ok( $mgr->mongo_database, "MongoDB::Database" );
+
+isa_ok( $mgr->mongo_database("test2"), "MongoDB::Database" );
+
+isa_ok( $mgr->mongo_collection( test => $coll_name ), "MongoDB::Collection" );
 
 ok( $mgr->mongo_collection($coll_name)->insert( { job => '-1', 'when' => time } ),
     "insert before fork" );
