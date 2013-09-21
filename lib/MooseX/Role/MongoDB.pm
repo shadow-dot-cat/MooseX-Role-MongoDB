@@ -35,9 +35,7 @@ sub _build_client_options { return {} }
 =attr default_database
 
 The name of a MongoDB database to use as a default collection source if not
-specifically requested.  Defaults to 'test'.  If set to anything other than
-'test', it will also be a default for C<db_name> in C<client_options>, which
-indicates the default database for authentication.
+specifically requested.  Defaults to 'test'.
 
 =cut
 
@@ -83,14 +81,6 @@ has _mongo_client => (
 sub _build__mongo_client {
     my ($self) = @_;
     return MongoDB::MongoClient->new( $self->client_options );
-}
-
-sub BUILD {
-    my ($self) = @_;
-
-    if ( $self->default_database ne 'test' ) {
-        $self->client_options->{db_name} //= $self->default_database;
-    }
 }
 
 #--------------------------------------------------------------------------#
