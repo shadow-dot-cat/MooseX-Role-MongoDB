@@ -223,6 +223,7 @@ authentication, unless a C<db_name> is provided to C<_mongo_client_options>.
 =head1 SEE ALSO
 
 =for :list
+* L<Moose>
 * L<MongoDB>
 
 =cut
