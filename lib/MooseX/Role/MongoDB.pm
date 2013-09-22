@@ -15,62 +15,39 @@ use Types::Standard qw/:types/;
 use namespace::autoclean;
 
 #--------------------------------------------------------------------------#
-# Public attributes and builders
+# Configuration attributes
 #--------------------------------------------------------------------------#
 
-=attr client_options
+has _mongo_client_class => (
+    is  => 'lazy',
+    isa => 'Str',
+);
 
-A hash reference of L<MongoDB::MongoClient> options that will be passed to its
-C<connect> method.
+sub _build__mongo_client_class { return 'MongoDB::MongoClient' }
 
-=cut
-
-has client_options => (
+has _mongo_client_options => (
     is  => 'lazy',
     isa => HashRef, # hashlike?
 );
 
-sub _build_client_options { return {} }
+sub _build__mongo_client_options { return {} }
 
-=attr default_database
-
-The name of a MongoDB database to use as a default collection source if not
-specifically requested.  Defaults to 'test'.
-
-=cut
-
-has default_database => (
+has _mongo_default_database => (
     is  => 'lazy',
     isa => Str,
 );
 
-sub _build_default_database { return 'test' }
+sub _build__mongo_default_database { return 'test' }
 
 #--------------------------------------------------------------------------#
-# Private attributes and builders
+# Caching attributes
 #--------------------------------------------------------------------------#
 
-has _pid => (
+has _mongo_pid => (
     is      => 'rwp',     # private setter so we can update on fork
     isa     => 'Num',
     default => sub { $$ },
 );
-
-has _collection_cache => (
-    is      => 'lazy',
-    isa     => HashRef,
-    clearer => 1,
-);
-
-sub _build__collection_cache { return {} }
-
-has _database_cache => (
-    is      => 'lazy',
-    isa     => HashRef,
-    clearer => 1,
-);
-
-sub _build__database_cache { return {} }
 
 has _mongo_client => (
     is      => 'lazy',
@@ -80,8 +57,26 @@ has _mongo_client => (
 
 sub _build__mongo_client {
     my ($self) = @_;
-    return MongoDB::MongoClient->new( $self->client_options );
+    my $options = { %{ $self->_mongo_client_options } };
+    $options->{db_name} //= $self->_mongo_default_database;
+    return MongoDB::MongoClient->new($options);
 }
+
+has _mongo_database_cache => (
+    is      => 'lazy',
+    isa     => HashRef,
+    clearer => 1,
+);
+
+sub _build__mongo_database_cache { return {} }
+
+has _mongo_collection_cache => (
+    is      => 'lazy',
+    isa     => HashRef,
+    clearer => 1,
+);
+
+sub _build__mongo_collection_cache { return {} }
 
 #--------------------------------------------------------------------------#
 # Public methods
@@ -98,9 +93,9 @@ Returns a L<MongoDB::Database>.  The argument is the database name.
 sub mongo_database {
     state $check = compile( Object, Optional [Str] );
     my ( $self, $database ) = $check->(@_);
-    $database //= $self->default_database;
-    $self->_check_pid;
-    return $self->_database_cache->{$database} //=
+    $database //= $self->_mongo_default_database;
+    $self->_mongo_check_pid;
+    return $self->_mongo_database_cache->{$database} //=
       $self->_mongo_client->get_database($database);
 }
 
@@ -119,39 +114,23 @@ sub mongo_collection {
     state $check = compile( Object, Str, Optional [Str] );
     my ( $self, @args ) = $check->(@_);
     my ( $database, $collection ) =
-      @args > 1 ? @args : ( $self->default_database, $args[0] );
-    $self->_check_pid;
-    return $self->_collection_cache->{$database}{$collection} //=
+      @args > 1 ? @args : ( $self->_mongo_default_database, $args[0] );
+    $self->_mongo_check_pid;
+    return $self->_mongo_collection_cache->{$database}{$collection} //=
       $self->mongo_database($database)->get_collection($collection);
 }
-
-#--------------------------------------------------------------------------#
-# Builder documentation
-#--------------------------------------------------------------------------#
-
-=method _build_client_options
-
-Returns an empty hash reference.  Override this to provide your own defaults.
-
-=cut
-
-=method _build_default_database
-
-Returns the string 'test'.  Override this to provide your own default.
-
-=cut
 
 #--------------------------------------------------------------------------#
 # Private methods
 #--------------------------------------------------------------------------#
 
 # check if we've forked and need to reconnect
-sub _check_pid {
+sub _mongo_check_pid {
     my ($self) = @_;
-    if ( $$ != $self->_pid ) {
-        $self->_set__pid($$);
-        $self->_clear_collection_cache;
-        $self->_clear_database_cache;
+    if ( $$ != $self->_mongo_pid ) {
+        $self->_set__mongo_pid($$);
+        $self->_clear_mongo_collection_cache;
+        $self->_clear_mongo_database_cache;
         $self->_clear_mongo_client;
     }
     return;
@@ -165,14 +144,29 @@ sub _check_pid {
 
 In your module:
 
-    package MyClass;
+    package MyData;
     use Moose;
     with 'MooseX::Role::MongoDB';
 
+    has database => (
+        is       => 'ro',
+        isa      => 'Str',
+        required => 1,
+    );
+
+    has client_options => (
+        is       => 'ro',
+        isa      => 'HashRef',
+        default  => sub { {} },
+    );
+
+    sub _build__mongo_default_database { return $_[0]->database }
+    sub _build__mongo_client_options   { return $_[0]->client_options }
+
 In your code:
 
-    my $obj = MyClass->new(
-        default_database => 'MyDB',
+    my $obj = MyData->new(
+        database => 'MyDB',
         client_options  => {
             host => "mongodb://example.net:27017",
             username => "willywonka",
@@ -180,21 +174,51 @@ In your code:
         },
     );
 
-    $obj_>mongo_database("test");                 # test database
+    $obj->mongo_database("test");                 # test database
     $obj->mongo_collection("books");              # in default database
     $obj->mongo_collection("otherdb" => "books"); # in other database
 
 =head1 DESCRIPTION
 
-This role helps create and manage MongoDB connections and objects.  MongoDB
-objects are generated lazily on demand and cached.
+This role helps create and manage L<MongoDB> objects.  All MongoDB objects will
+be generated lazily on demand and cached.  The role manages a single
+L<MongoDB::MongoClient> connection, but many L<MongoDB::Database> and
+L<MongoDB::Collection> objects.
 
-The role also compensates for forks.  If a fork is detected, the caches are
-cleared and new connections and objects will be generated in the new process.
+The role also compensates for forks.  If a fork is detected, the object caches
+are cleared and new connections and objects will be generated in the new
+process.
 
 When using this role, you should not hold onto MongoDB objects for long if
 there is a chance of your code forking.  Instead, request them again
 each time you need them.
+
+=head1 CONFIGURING
+
+The role uses several private attributes to configure itself:
+
+=for :list
+* C<_mongo_client_class> — name of the client class
+* C<_mongo_client_options> — passed to client constructor
+* C<_mongo_default_database> — default name used if not specified
+
+Each of these have lazy builders that you can override in your class to
+customize behavior of the role.
+
+The builders are:
+
+=for :list
+* C<_build__mongo_client_class> — default is C<MongoDB::MongoClient>
+* C<_build__mongo_client_options> — default is an empty hash reference
+* C<_build__mongo_default_database> — default is the string 'test'
+
+You will generally want to at least override C<_build__mongo_client_options> to
+allow connecting to different hosts.  You may want to set it explicitly or you
+may want to have your own public attribute for users to set (as shown in the
+L</SYNOPSIS>).  The choice is up to you.
+
+Note that the C<_mongo_default_database> is also used as the default database for
+authentication, unless a C<db_name> is provided to C<_mongo_client_options>.
 
 =head1 SEE ALSO
 

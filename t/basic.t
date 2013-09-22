@@ -33,7 +33,7 @@ $conn->get_database("test")->get_collection($coll_name)->drop;
 
 my $mgr;
 
-$mgr = new_ok( 'MongoManager' => [ default_database => "test2" ] );
+$mgr = new_ok( 'MongoManager' => [ mongo_default_database => "test2" ] );
 
 $mgr = new_ok('MongoManager');
 
@@ -54,7 +54,7 @@ my $iter = iterate(
         $mgr->mongo_collection($coll_name)->insert( { job => $job, 'when' => time } );
         return {
             pid        => $$,
-            cached_pid => $mgr->_pid,
+            cached_pid => $mgr->_mongo_pid,
         };
     },
     [ 1 .. $num_forks ],
