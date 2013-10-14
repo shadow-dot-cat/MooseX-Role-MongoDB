@@ -2,6 +2,8 @@ Revision history for MooseX-Role-MongoDB
 
 {{$NEXT}}
 
+0.002     2013-10-14 13:55:42 America/New_York
+
     [CHANGED]
 
     - If a 'host' attributes is provided in the client options hash, any
