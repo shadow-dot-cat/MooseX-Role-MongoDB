@@ -9,7 +9,9 @@ package MooseX::Role::MongoDB;
 use Moose::Role 2;
 use MooseX::AttributeShortcuts;
 
+use Log::Any;
 use MongoDB::MongoClient 0.702;
+use String::Flogger qw/flog/;
 use Type::Params qw/compile/;
 use Types::Standard qw/:types/;
 use namespace::autoclean;
@@ -59,6 +61,7 @@ sub _build__mongo_client {
     my ($self) = @_;
     my $options = { %{ $self->_mongo_client_options } };
     $options->{db_name} //= $self->_mongo_default_database;
+    $self->_mongo_log( debug => "connecting to MongoDB with %s", $options );
     return MongoDB::MongoClient->new($options);
 }
 
@@ -79,6 +82,17 @@ has _mongo_collection_cache => (
 sub _build__mongo_collection_cache { return {} }
 
 #--------------------------------------------------------------------------#
+# Logging attribute
+#--------------------------------------------------------------------------#
+
+# XXX eventually, isa will be Log::Any::Proxy, but that hasn't shipped yet
+has _mongo_logger => (
+    is      => 'ro',
+    isa     => 'Object',
+    default => sub { Log::Any->get_logger },
+);
+
+#--------------------------------------------------------------------------#
 # Public methods
 #--------------------------------------------------------------------------#
 
@@ -95,6 +109,7 @@ sub mongo_database {
     my ( $self, $database ) = $check->(@_);
     $database //= $self->_mongo_default_database;
     $self->_mongo_check_pid;
+    $self->_mongo_log( debug => "retrieving database $database" );
     return $self->_mongo_database_cache->{$database} //=
       $self->_mongo_client->get_database($database);
 }
@@ -116,6 +131,7 @@ sub mongo_collection {
     my ( $database, $collection ) =
       @args > 1 ? @args : ( $self->_mongo_default_database, $args[0] );
     $self->_mongo_check_pid;
+    $self->_mongo_log( debug => "retrieving collection $database.$collection" );
     return $self->_mongo_collection_cache->{$database}{$collection} //=
       $self->mongo_database($database)->get_collection($collection);
 }
@@ -128,12 +144,19 @@ sub mongo_collection {
 sub _mongo_check_pid {
     my ($self) = @_;
     if ( $$ != $self->_mongo_pid ) {
+        $self->_mongo_log( debug => "clearing MongoDB caches" );
         $self->_set__mongo_pid($$);
         $self->_clear_mongo_collection_cache;
         $self->_clear_mongo_database_cache;
         $self->_clear_mongo_client;
     }
     return;
+}
+
+sub _mongo_log {
+    my ( $self, $level, @msg ) = @_;
+    $msg[0] = "$self ($$) $msg[0]";
+    $self->_mongo_logger->$level( flog( [@msg] ) );
 }
 
 1;

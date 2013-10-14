@@ -5,9 +5,14 @@ use Test::FailWarnings;
 use Test::Requires qw/MongoDB::MongoClient/;
 
 use Config;
+use Log::Any::Adapter;
 use Parallel::Iterator qw/iterate/;
 
 plan skip_all => "Requires forking" unless $Config{d_fork};
+
+if ( $ENV{PERL_MONGODB_DEBUG} ) {
+    Log::Any::Adapter->set('Stdout');
+}
 
 #--------------------------------------------------------------------------#
 # Fixtures
