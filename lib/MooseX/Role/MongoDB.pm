@@ -106,6 +106,7 @@ has _mongo_logger => (
     $obj->mongo_database( $database_name );
 
 Returns a L<MongoDB::Database>.  The argument is the database name.
+With no argument, the default database name is used.
 
 =cut
 
@@ -306,8 +307,19 @@ allow connecting to different hosts.  You may want to set it explicitly or you
 may want to have your own public attribute for users to set (as shown in the
 L</SYNOPSIS>).  The choice is up to you.
 
+If a MongoDB C<host> string is provided in the client options hash, any host
+names will be converted to IP addresses to avoid known bugs using
+authentication over SSL.
+
 Note that the C<_mongo_default_database> is also used as the default database for
 authentication, unless a C<db_name> is provided to C<_mongo_client_options>.
+
+=head1 LOGGING
+
+This role logs using L<Log::Any>, which by default uses a "Null" logger and
+discards messages.  Currently, only 'debug' level logs messages are generated
+for tracing MongoDB interactions activity across forks.  See the tests for an
+example of how to enable it.
 
 =head1 SEE ALSO
 
