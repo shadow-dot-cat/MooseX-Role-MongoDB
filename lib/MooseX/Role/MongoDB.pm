@@ -9,8 +9,10 @@ package MooseX::Role::MongoDB;
 use Moose::Role 2;
 use MooseX::AttributeShortcuts;
 
+use Carp ();
 use Log::Any;
 use MongoDB::MongoClient 0.702;
+use Socket qw/:addrinfo SOCK_RAW/; # IPv6 capable
 use String::Flogger qw/flog/;
 use Type::Params qw/compile/;
 use Types::Standard qw/:types/;
@@ -60,6 +62,9 @@ has _mongo_client => (
 sub _build__mongo_client {
     my ($self) = @_;
     my $options = { %{ $self->_mongo_client_options } };
+    if ( exists $options->{host} ) {
+        $options->{host} = $self->_host_names_to_ip( $options->{host} );
+    }
     $options->{db_name} //= $self->_mongo_default_database;
     $self->_mongo_log( debug => "connecting to MongoDB with %s", $options );
     return MongoDB::MongoClient->new($options);
@@ -157,6 +162,67 @@ sub _mongo_log {
     my ( $self, $level, @msg ) = @_;
     $msg[0] = "$self ($$) $msg[0]";
     $self->_mongo_logger->$level( flog( [@msg] ) );
+}
+
+sub _parse_connection_uri {
+    my ( $self, $uri ) = @_;
+    my %parse;
+    if (
+        $uri =~ m{ ^
+            mongodb://
+            (?: ([^:]*) : ([^@]*) @ )? # [username:password@]
+            ([^/]*) # host1[:port1][,host2[:port2],...[,hostN[:portN]]]
+            (?:
+               / ([^?]*) # /[database]
+                (?: [?] (.*) )? # [?options]
+            )?
+            $ }x
+      )
+    {
+        return {
+            username  => $1 // '',
+            password  => $2 // '',
+            hostpairs => $3 // '',
+            db_name   => $4 // '',
+            options   => $5 // '',
+        };
+    }
+    return;
+}
+
+sub _host_names_to_ip {
+    my ( $self, $uri ) = @_;
+    my $parsed = $self->_parse_connection_uri($uri)
+      or Carp::confess("Could not parse connection string '$uri'\n");
+
+    # convert hostnames to IP addresses to work around
+    # some MongoDB bugs/inefficiencies
+    my @pairs;
+    for my $p ( split /,/, $parsed->{hostpairs} ) {
+        my ( $host, $port ) = split /:/, $p;
+        my $ipaddr;
+        for my $family ( Socket::AF_INET(), Socket::AF_INET6() ) {
+            my ( $err, $res ) =
+              getaddrinfo( $host, "", { family => $family, socktype => SOCK_RAW } );
+            next if $err;
+            ( $err, $ipaddr ) = getnameinfo( $res->{addr}, NI_NUMERICHOST, NIx_NOSERV );
+            last if defined $ipaddr;
+        }
+        Carp::croak "Cannot resolve address for '$host'" unless defined $ipaddr;
+        $ipaddr .= ":$port" if length $port;
+        push @pairs, $ipaddr;
+    }
+
+    # reassemble new host URI
+    my $new_host = "mongodb://";
+    $new_host .= "$parsed->{username}:$parsed->{password}\@"
+      if length $parsed->{username};
+    $new_host .= join( ",", @pairs );
+    $new_host .= "/" if length $parsed->{database} || length $parsed->{options};
+    $new_host .= $parsed->{database}   if length $parsed->{database};
+    $new_host .= "?$parsed->{options}" if length $parsed->{options};
+
+    return $new_host;
 }
 
 1;
