@@ -6,6 +6,7 @@ use Test::Requires qw/MongoDB::MongoClient/;
 
 use Config;
 use Log::Any::Adapter;
+use MooseX::Role::Logger;
 use Parallel::Iterator qw/iterate/;
 
 plan skip_all => "Requires forking" unless $Config{d_fork};
@@ -29,7 +30,7 @@ $conn->get_database("test")->get_collection($coll_name)->drop;
 
     package MongoManager;
     use Moose;
-    with 'MooseX::Role::MongoDB';
+    with 'MooseX::Role::MongoDB', 'MooseX::Role::Logger';
 
 }
 
@@ -37,7 +38,7 @@ $conn->get_database("test")->get_collection($coll_name)->drop;
 
     package OpinionatedManager;
     use Moose;
-    with 'MooseX::Role::MongoDB';
+    with 'MooseX::Role::MongoDB', 'MooseX::Role::Logger';
 
     has default_database => (
         is      => 'ro',

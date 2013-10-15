@@ -1,5 +1,4 @@
 requires "Carp" => "0";
-requires "Log::Any" => "0";
 requires "MongoDB::MongoClient" => "0.702";
 requires "Moose::Role" => "2";
 requires "MooseX::AttributeShortcuts" => "0";
@@ -18,6 +17,7 @@ on 'test' => sub {
   requires "List::Util" => "0";
   requires "Log::Any::Adapter" => "0";
   requires "Moose" => "0";
+  requires "MooseX::Role::Logger" => "0";
   requires "Parallel::Iterator" => "0";
   requires "Test::FailWarnings" => "0";
   requires "Test::More" => "0.96";

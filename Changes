@@ -2,6 +2,11 @@ Revision history for MooseX-Role-MongoDB
 
 {{$NEXT}}
 
+    [CHANGED]
+
+    - Implemented logging by requiring a 'logger' method from the consumer;
+      recommends (and tests with) MooseX::Role::Logger
+
 0.002     2013-10-14 13:55:42 America/New_York
 
     [CHANGED]
