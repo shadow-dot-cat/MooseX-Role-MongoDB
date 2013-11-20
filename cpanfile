@@ -2,7 +2,7 @@ requires "Carp" => "0";
 requires "MongoDB::MongoClient" => "0.702";
 requires "Moose::Role" => "2";
 requires "MooseX::AttributeShortcuts" => "0";
-requires "Socket" => "0";
+requires "Socket" => "1.96";
 requires "String::Flogger" => "0";
 requires "Type::Params" => "0";
 requires "Types::Standard" => "0";
@@ -24,11 +24,18 @@ on 'test' => sub {
   requires "Test::Requires" => "0";
 };
 
+on 'test' => sub {
+  recommends "CPAN::Meta" => "0";
+  recommends "CPAN::Meta::Requirements" => "0";
+};
+
 on 'configure' => sub {
   requires "ExtUtils::MakeMaker" => "6.17";
 };
 
 on 'develop' => sub {
+  requires "Dist::Zilla" => "5.006";
+  requires "Dist::Zilla::PluginBundle::DAGOLDEN" => "0.053";
   requires "File::Spec" => "0";
   requires "File::Temp" => "0";
   requires "IO::Handle" => "0";
