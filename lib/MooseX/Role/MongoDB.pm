@@ -223,7 +223,7 @@ sub _host_names_to_ip {
             last if defined $ipaddr;
         }
         Carp::croak "Cannot resolve address for '$host'" unless defined $ipaddr;
-        $ipaddr .= ":$port" if length $port;
+        $ipaddr .= ":$port" if defined $port && length $port;
         push @pairs, $ipaddr;
     }
 
