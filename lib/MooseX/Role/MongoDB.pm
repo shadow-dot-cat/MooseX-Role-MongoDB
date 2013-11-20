@@ -288,9 +288,12 @@ be generated lazily on demand and cached.  The role manages a single
 L<MongoDB::MongoClient> connection, but many L<MongoDB::Database> and
 L<MongoDB::Collection> objects.
 
-The role also compensates for forks.  If a fork is detected, the object caches
-are cleared and new connections and objects will be generated in the new
-process.
+The role also compensates for dropped connections and forks.  If these are
+detected, the object caches are cleared and new connections and objects will be
+generated in the new process.
+
+Note that a lost connection will not be detectable until I<after> an exception
+is thrown due to a failed operation.
 
 When using this role, you should not hold onto MongoDB objects for long if
 there is a chance of your code forking.  Instead, request them again
