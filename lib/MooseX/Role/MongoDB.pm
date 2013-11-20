@@ -67,9 +67,10 @@ has _mongo_pid => (
 );
 
 has _mongo_client => (
-    is      => 'lazy',
-    isa     => InstanceOf ['MongoDB::MongoClient'],
-    clearer => 1,
+    is        => 'lazy',
+    isa       => InstanceOf ['MongoDB::MongoClient'],
+    clearer   => 1,
+    predicate => '_has_mongo_client',
 );
 
 sub _build__mongo_client {
@@ -116,7 +117,7 @@ sub mongo_database {
     state $check = compile( Object, Optional [Str] );
     my ( $self, $database ) = $check->(@_);
     $database //= $self->_mongo_default_database;
-    $self->_mongo_check_pid;
+    $self->_mongo_check_connection;
     $self->_mongo_log( debug => "retrieving database $database" );
     return $self->_mongo_database_cache->{$database} //=
       $self->_mongo_client->get_database($database);
@@ -138,7 +139,7 @@ sub mongo_collection {
     my ( $self, @args ) = $check->(@_);
     my ( $database, $collection ) =
       @args > 1 ? @args : ( $self->_mongo_default_database, $args[0] );
-    $self->_mongo_check_pid;
+    $self->_mongo_check_connection;
     $self->_mongo_log( debug => "retrieving collection $database.$collection" );
     return $self->_mongo_collection_cache->{$database}{$collection} //=
       $self->mongo_database($database)->get_collection($collection);
@@ -149,15 +150,25 @@ sub mongo_collection {
 #--------------------------------------------------------------------------#
 
 # check if we've forked and need to reconnect
-sub _mongo_check_pid {
+sub _mongo_check_connection {
     my ($self) = @_;
+
+    my $reset_reason;
     if ( $$ != $self->_mongo_pid ) {
-        $self->_mongo_log( debug => "clearing MongoDB caches" );
+        $reset_reason = "PID change";
+    }
+    elsif ( $self->_has_mongo_client && !$self->_mongo_client->connected ) {
+        $reset_reason = "Not connected";
+    }
+
+    if ($reset_reason) {
+        $self->_mongo_log( debug => "clearing MongoDB caches: $reset_reason" );
         $self->_set__mongo_pid($$);
         $self->_clear_mongo_collection_cache;
         $self->_clear_mongo_database_cache;
         $self->_clear_mongo_client;
     }
+
     return;
 }
 

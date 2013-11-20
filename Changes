@@ -2,6 +2,11 @@ Revision history for MooseX-Role-MongoDB
 
 {{$NEXT}}
 
+    [FIXED]
+
+    - Checks that the database connection is still live and clears
+      the caches if it is not
+
 0.003     2013-10-15 19:32:08 America/New_York
 
     [CHANGED]
