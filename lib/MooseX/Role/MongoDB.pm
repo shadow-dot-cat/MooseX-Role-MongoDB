@@ -232,8 +232,8 @@ sub _host_names_to_ip {
     $new_host .= "$parsed->{username}:$parsed->{password}\@"
       if length $parsed->{username};
     $new_host .= join( ",", @pairs );
-    $new_host .= "/" if length $parsed->{database} || length $parsed->{options};
-    $new_host .= $parsed->{database}   if length $parsed->{database};
+    $new_host .= "/" if length $parsed->{db_name} || length $parsed->{options};
+    $new_host .= $parsed->{db_name} if length $parsed->{db_name};
     $new_host .= "?$parsed->{options}" if length $parsed->{options};
 
     return $new_host;
