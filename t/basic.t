@@ -97,7 +97,12 @@ subtest 'parallel insertion' => sub {
     my $mgr = new_ok('MongoManager');
 
     ok( $mgr->mongo_collection($coll_name)->insert( { job => '-1', 'when' => time } ),
-        "insert before fork" );
+        "insert before cache clear" );
+
+    ok( $mgr->mongo_clear_caches, "caches cleared" );
+
+    ok( $mgr->mongo_collection($coll_name)->insert( { job => '-1', 'when' => time } ),
+        "insert after cache clear, before fork" );
 
     my $num_forks = 3;
 
@@ -120,7 +125,7 @@ subtest 'parallel insertion' => sub {
 
     is(
         $mgr->mongo_collection($coll_name)->count,
-        $num_forks + 1,
+        $num_forks + 2,
         "children created $num_forks objects"
     );
 };

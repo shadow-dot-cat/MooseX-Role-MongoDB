@@ -145,6 +145,23 @@ sub mongo_collection {
       $self->mongo_database($database)->get_collection($collection);
 }
 
+=method mongo_clear_caches
+
+    $obj->mongo_clear_caches;
+
+Clears the MongoDB client, database and collection caches.  The next
+request for a database or collection will reconnect to the MongoDB.
+
+=cut
+
+sub mongo_clear_caches {
+    my ($self) = @_;
+    $self->_clear_mongo_collection_cache;
+    $self->_clear_mongo_database_cache;
+    $self->_clear_mongo_client;
+    return 1;
+}
+
 #--------------------------------------------------------------------------#
 # Private methods
 #--------------------------------------------------------------------------#
@@ -156,6 +173,7 @@ sub _mongo_check_connection {
     my $reset_reason;
     if ( $$ != $self->_mongo_pid ) {
         $reset_reason = "PID change";
+        $self->_set__mongo_pid($$);
     }
     elsif ( $self->_has_mongo_client && !$self->_mongo_client->connected ) {
         $reset_reason = "Not connected";
@@ -163,10 +181,7 @@ sub _mongo_check_connection {
 
     if ($reset_reason) {
         $self->_mongo_log( debug => "clearing MongoDB caches: $reset_reason" );
-        $self->_set__mongo_pid($$);
-        $self->_clear_mongo_collection_cache;
-        $self->_clear_mongo_database_cache;
-        $self->_clear_mongo_client;
+        $self->mongo_clear_caches;
     }
 
     return;
