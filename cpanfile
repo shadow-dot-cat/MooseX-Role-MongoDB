@@ -22,11 +22,12 @@ on 'test' => sub {
   requires "Test::FailWarnings" => "0";
   requires "Test::More" => "0.96";
   requires "Test::Requires" => "0";
+  requires "version" => "0";
 };
 
 on 'test' => sub {
   recommends "CPAN::Meta" => "0";
-  recommends "CPAN::Meta::Requirements" => "0";
+  recommends "CPAN::Meta::Requirements" => "2.120900";
 };
 
 on 'configure' => sub {
@@ -34,7 +35,7 @@ on 'configure' => sub {
 };
 
 on 'develop' => sub {
-  requires "Dist::Zilla" => "5.006";
+  requires "Dist::Zilla" => "5.012";
   requires "Dist::Zilla::PluginBundle::DAGOLDEN" => "0.053";
   requires "File::Spec" => "0";
   requires "File::Temp" => "0";
