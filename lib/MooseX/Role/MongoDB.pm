@@ -282,6 +282,21 @@ In your module:
     sub _build__mongo_default_database { return $_[0]->database }
     sub _build__mongo_client_options   { return $_[0]->client_options }
 
+    sub do_stuff {
+        my ($self) = @_;
+
+        # get "test" database
+        my $db = $self->_mongo_database("test");
+
+        # get "books" collection from default database
+        my $books = $self->_mongo_collection("books");
+
+        # get "books" collection from another database
+        my $other = $self->_mongo_collection("otherdb" => "books");
+
+        # ... do stuff with them
+    }
+
 In your code:
 
     my $obj = MyData->new(
@@ -293,9 +308,7 @@ In your code:
         },
     );
 
-    $obj->_mongo_database("test");                 # test database
-    $obj->_mongo_collection("books");              # in default database
-    $obj->_mongo_collection("otherdb" => "books"); # in other database
+    $obj->do_stuff;
 
 =head1 DESCRIPTION
 
