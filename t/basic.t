@@ -6,7 +6,7 @@ use Test::Requires qw/MongoDB::MongoClient/;
 
 use Config;
 use Log::Any::Adapter;
-use MooseX::Role::Logger;
+use MooseX::Role::Logger 0.002;
 use Parallel::Iterator qw/iterate/;
 
 plan skip_all => "Requires forking" unless $Config{d_fork};

@@ -2,6 +2,10 @@ Revision history for MooseX-Role-MongoDB
 
 {{$NEXT}}
 
+    [FIXED]
+
+    - Added test dependency on MooseX::Role::Logger 0.002
+
 0.006     2014-01-24 22:58:42-05:00 America/New_York
 
     [INCOMPATIBLE CHANGES]
