@@ -2,6 +2,12 @@ Revision history for MooseX-Role-MongoDB
 
 {{$NEXT}}
 
+    [INCOMPATIBLE CHANGES]
+
+    - Role now provides private methods ("_mongo_database") instead of
+      public ones ("mongo_database") so as not to pollute the consuming
+      class' API (thanks, mst)
+
 0.005     2013-11-22 14:41:42 America/New_York
 
     [ADDED]

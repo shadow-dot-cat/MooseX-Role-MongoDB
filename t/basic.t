@@ -66,28 +66,28 @@ subtest 'database names and constructor arguments' => sub {
     my ( $db, $coll );
 
     # default database name
-    isa_ok( $db = $mgr->mongo_database, "MongoDB::Database", "mongo_database" );
+    isa_ok( $db = $mgr->_mongo_database, "MongoDB::Database", "_mongo_database" );
     is( $db->name, 'test', "default database is 'test'" );
 
-    isa_ok( $coll = $mgr->mongo_collection($coll_name),
-        "MongoDB::Collection", "mongo_collection" );
+    isa_ok( $coll = $mgr->_mongo_collection($coll_name),
+        "MongoDB::Collection", "_mongo_collection" );
     is( $coll->full_name, "test.$coll_name", "collection name from default database" );
 
-    isa_ok( $coll = $mgr->mongo_collection( test2 => $coll_name ),
-        "MongoDB::Collection", "mongo_collection" );
+    isa_ok( $coll = $mgr->_mongo_collection( test2 => $coll_name ),
+        "MongoDB::Collection", "_mongo_collection" );
     is( $coll->full_name, "test2.$coll_name", "collection name from explicit database" );
 
     $mgr = new_ok('OpinionatedManager');
-    is( $mgr->mongo_collection($coll_name)->full_name,
+    is( $mgr->_mongo_collection($coll_name)->full_name,
         "test2.$coll_name", "collection name from class default database" );
 
     $mgr = new_ok( 'OpinionatedManager', [ default_database => 'test3' ] );
-    is( $mgr->mongo_collection($coll_name)->full_name,
+    is( $mgr->_mongo_collection($coll_name)->full_name,
         "test3.$coll_name", "collection name from constructor argument" );
 
     $mgr = new_ok( 'OpinionatedManager',
         [ client_options => { host => "mongodb://127.0.0.1" } ] );
-    is( $mgr->mongo_collection($coll_name)->full_name,
+    is( $mgr->_mongo_collection($coll_name)->full_name,
         "test2.$coll_name", "collection name from class default database" );
 
 };
@@ -96,12 +96,12 @@ subtest 'parallel insertion' => sub {
 
     my $mgr = new_ok('MongoManager');
 
-    ok( $mgr->mongo_collection($coll_name)->insert( { job => '-1', 'when' => time } ),
+    ok( $mgr->_mongo_collection($coll_name)->insert( { job => '-1', 'when' => time } ),
         "insert before cache clear" );
 
-    ok( $mgr->mongo_clear_caches, "caches cleared" );
+    ok( $mgr->_mongo_clear_caches, "caches cleared" );
 
-    ok( $mgr->mongo_collection($coll_name)->insert( { job => '-1', 'when' => time } ),
+    ok( $mgr->_mongo_collection($coll_name)->insert( { job => '-1', 'when' => time } ),
         "insert after cache clear, before fork" );
 
     my $num_forks = 3;
@@ -109,7 +109,7 @@ subtest 'parallel insertion' => sub {
     my $iter = iterate(
         sub {
             my ( $id, $job ) = @_;
-            $mgr->mongo_collection($coll_name)->insert( { job => $job, 'when' => time } );
+            $mgr->_mongo_collection($coll_name)->insert( { job => $job, 'when' => time } );
             return {
                 pid        => $$,
                 cached_pid => $mgr->_mongo_pid,
@@ -124,7 +124,7 @@ subtest 'parallel insertion' => sub {
     }
 
     is(
-        $mgr->mongo_collection($coll_name)->count,
+        $mgr->_mongo_collection($coll_name)->count,
         $num_forks + 2,
         "children created $num_forks objects"
     );
