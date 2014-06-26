@@ -8,6 +8,7 @@ use Config;
 use Log::Any::Adapter;
 use MooseX::Role::Logger 0.002;
 use Parallel::Iterator qw/iterate/;
+use MooseX::Role::MongoDB; #check at least compilation in case that other tests are skipped
 
 plan skip_all => "Requires forking" unless $Config{d_fork};
 
