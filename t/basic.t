@@ -2,15 +2,18 @@ use strict;
 use warnings;
 use Test::More 0.96;
 use Test::FailWarnings;
-use Test::Requires qw/MongoDB::MongoClient/;
+use Test::Requires qw/MongoDB MongoDB::MongoClient/;
 
 use Config;
 use Log::Any::Adapter;
 use MooseX::Role::Logger 0.002;
 use Parallel::Iterator qw/iterate/;
-use MooseX::Role::MongoDB; #check at least compilation in case that other tests are skipped
+use MooseX::Role::MongoDB
+  ; #check at least compilation in case that other tests are skipped
 
 plan skip_all => "Requires forking" unless $Config{d_fork};
+
+diag "MongoDB::MongoClient version " . MongoDB::MongoClient->VERSION;
 
 if ( $ENV{PERL_MONGODB_DEBUG} ) {
     Log::Any::Adapter->set('Stdout');

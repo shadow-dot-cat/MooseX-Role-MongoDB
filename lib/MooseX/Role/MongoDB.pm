@@ -10,6 +10,7 @@ use Moose::Role 2;
 use MooseX::AttributeShortcuts;
 
 use Carp ();
+use MongoDB;
 use MongoDB::MongoClient 0.702;
 use Socket 1.96 qw/:addrinfo SOCK_RAW/; # IPv6 capable
 use String::Flogger qw/flog/;
