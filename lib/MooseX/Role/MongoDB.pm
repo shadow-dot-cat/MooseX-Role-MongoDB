@@ -172,12 +172,17 @@ sub _mongo_clear_caches {
 sub _mongo_check_connection {
     my ($self) = @_;
 
+    my $mc = $self->_has_mongo_client ? $self->_mongo_client : undef;
+
+    # alpha driver manages forks for us, so we don't need to
+    my $is_alpha = $mc && eval { $mc->VERSION(v0.998.0) };
+
     my $reset_reason;
     if ( $$ != $self->_mongo_pid ) {
-        $reset_reason = "PID change";
+        $reset_reason = "PID change" unless $is_alpha;
         $self->_set__mongo_pid($$);
     }
-    elsif ( $self->_has_mongo_client && !$self->_mongo_client->connected ) {
+    elsif ( !$is_alpha && $mc && !$mc->connected ) {
         $reset_reason = "Not connected";
     }
 
