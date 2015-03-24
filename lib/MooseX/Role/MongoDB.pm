@@ -5,7 +5,7 @@ use warnings;
 package MooseX::Role::MongoDB;
 # ABSTRACT: Provide MongoDB connections, databases and collections
 
-our $VERSION = '0.008';
+our $VERSION = '0.009';
 
 use Moose::Role 2;
 use MooseX::AttributeShortcuts;

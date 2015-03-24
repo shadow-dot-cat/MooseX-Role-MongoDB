@@ -2,6 +2,8 @@ Revision history for MooseX-Role-MongoDB
 
 {{$NEXT}}
 
+0.008     2015-03-23 20:21:39-04:00 America/New_York
+
     [FIXED]
 
     - Ensured MongoDB XS components are loaded before MongoDB::MongoClient
