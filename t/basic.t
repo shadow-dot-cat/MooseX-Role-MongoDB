@@ -25,8 +25,11 @@ if ( $ENV{PERL_MONGODB_DEBUG} ) {
 
 my $coll_name = "moose_role_mongodb_test";
 
-my $conn = eval { MongoDB::MongoClient->new }
-  or plan skip_all => "No MongoDB on localhost";
+my $conn = eval {
+    my $mc = MongoDB::MongoClient->new;
+    $mc->get_database("admin")->run_command( [ ismaster => 1 ] );
+    $mc;
+} or plan skip_all => "No MongoDB on localhost";
 
 $conn->get_database("test")->get_collection($coll_name)->drop;
 

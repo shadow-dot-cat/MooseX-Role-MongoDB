@@ -175,12 +175,12 @@ sub _mongo_check_connection {
 
     my $mc = $self->_has_mongo_client ? $self->_mongo_client : undef;
 
-    # alpha driver manages forks for us, so we don't need to
+    # v1.0.0 alpha and later reconnects after disconnects
     my $is_alpha = $mc && eval { $mc->VERSION(v0.998.0) };
 
     my $reset_reason;
     if ( $$ != $self->_mongo_pid ) {
-        $reset_reason = "PID change" unless $is_alpha;
+        $reset_reason = "PID change";
         $self->_set__mongo_pid($$);
     }
     elsif ( !$is_alpha && $mc && !$mc->connected ) {
