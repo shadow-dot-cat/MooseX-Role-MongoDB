@@ -103,12 +103,12 @@ subtest 'parallel insertion' => sub {
 
     my $mgr = new_ok('MongoManager');
 
-    ok( $mgr->_mongo_collection($coll_name)->insert( { job => '-1', 'when' => time } ),
+    ok( $mgr->_mongo_collection($coll_name)->insert_one( { job => '-1', 'when' => time } ),
         "insert before cache clear" );
 
     ok( $mgr->_mongo_clear_caches, "caches cleared" );
 
-    ok( $mgr->_mongo_collection($coll_name)->insert( { job => '-1', 'when' => time } ),
+    ok( $mgr->_mongo_collection($coll_name)->insert_one( { job => '-1', 'when' => time } ),
         "insert after cache clear, before fork" );
 
     my $num_forks = 3;
@@ -116,7 +116,7 @@ subtest 'parallel insertion' => sub {
     my $iter = iterate(
         sub {
             my ( $id, $job ) = @_;
-            $mgr->_mongo_collection($coll_name)->insert( { job => $job, 'when' => time } );
+            $mgr->_mongo_collection($coll_name)->insert_one( { job => $job, 'when' => time } );
             return {
                 pid        => $$,
                 cached_pid => $mgr->_mongo_pid,
