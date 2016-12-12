@@ -2,6 +2,15 @@ Revision history for MooseX-Role-MongoDB
 
 {{$NEXT}}
 
+    [CHANGED]
+
+    - Requires MongoDB v1.0.0 or later.
+
+    [FIXED]
+
+    - Tests no longer fail under MongoDB v1.6.0, which adds deprecation
+      warnings to legacy functions.
+
 0.009     2015-08-13 17:53:07-04:00 America/New_York
 
     [FIXED]
