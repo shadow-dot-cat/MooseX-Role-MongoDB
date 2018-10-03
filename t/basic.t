@@ -131,7 +131,7 @@ subtest 'parallel insertion' => sub {
     }
 
     is(
-        $mgr->_mongo_collection($coll_name)->count,
+        $mgr->_mongo_collection($coll_name)->count_documents({}),
         $num_forks + 2,
         "children created $num_forks objects"
     );
